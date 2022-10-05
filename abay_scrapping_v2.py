@@ -47,8 +47,6 @@ def route_pricing(from_date:str, to_date:str, route:str, use_range:bool = False,
     arr1 = route[4:7]
     dep2 = arr1
     arr2 = dep1
-    sector1 = dep1 + '-' + arr1
-    sector2 = dep2 + '-' + arr2
     
     # create directory
     sub_dir1 = route[:7]
