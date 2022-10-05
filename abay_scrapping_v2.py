@@ -29,7 +29,6 @@ def route_pricing(from_date:str, to_date:str, route:str, use_range:bool = False,
     """Create abay_scrapping folder under current directory and sub-directory of routes inside \n
     create a table with {'date', 'sector', 'dep station', 'arr staion', 'directory to save csv files'} \n
     if use_range = True, use the scrape range of 40 days, scrape_range can be changed as wished
-
     """
 
 
@@ -68,9 +67,9 @@ def route_pricing(from_date:str, to_date:str, route:str, use_range:bool = False,
         pass
     
     # create a dataframe
-    to_scrape1 = pd.DataFrame({'dates':scrapping_dates, 'sector':sector1, 'dep':dep1, 'arr':arr1})
+    to_scrape1 = pd.DataFrame({'dates':scrapping_dates, 'dep':dep1, 'arr':arr1})
     to_scrape1['dir'] = dir_1
-    to_scrape2 = pd.DataFrame({'dates':scrapping_dates, 'sector':sector2, 'dep':dep2, 'arr':arr2})
+    to_scrape2 = pd.DataFrame({'dates':scrapping_dates, 'dep':dep2, 'arr':arr2})
     to_scrape2['dir'] = dir_2
     to_scrape = pd.concat([to_scrape1, to_scrape2])
     to_scrape.reset_index(drop=True, inplace=True)
@@ -81,6 +80,9 @@ def route_pricing(from_date:str, to_date:str, route:str, use_range:bool = False,
 
 # define web scrapping function
 def abay_scrapping(ngay, thang, nam, dep_station, arr_station, location):
+    """a function to scrape data from Abay.vn and save .csv file to 'location' directory """
+
+
     driver.get('https://www.abay.vn')
     # choose the route
     driver.execute_script(f'''document.getElementById("cphMain_ctl00_usrSearchFormDV2_txtFrom").setAttribute('value', '{abay_station[dep_station]}');''')
@@ -156,12 +158,12 @@ for scrape in to_scrape_all:
             err_list.append(scrape)
             break
         try:
-            abay_scrapping(ngay=scrape[0].day, thang=scrape[0].month, nam=scrape[0].year, dep_station=scrape[2], arr_station=scrape[3])
+            abay_scrapping(ngay=scrape[0].day, thang=scrape[0].month, nam=scrape[0].year, dep_station=scrape[1], arr_station=scrape[2], location=scrape[3])
         except:
             continue
         break
     
 driver.quit()
 
-# pd.DataFrame(err_list, columns=['date', 'sector', 'dir']).to_excel('error_list.xlsx', index=False)
+pd.DataFrame(err_list).to_excel('error_list.xlsx', index=False)
 sys.exit()
