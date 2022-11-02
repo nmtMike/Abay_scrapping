@@ -1,3 +1,5 @@
+# this script is used for packaging a python app via pyinstaller
+# _____________________________________________________________________________
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
