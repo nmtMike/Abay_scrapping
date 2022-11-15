@@ -12,7 +12,7 @@ import time
 import easygui
 import sys
 
-abay_station = {'SGN':'TP Hồ Chí Minh (SGN)', 'HAN':'Hà Nội (HAN)', 'DAD':'Đà Nẵng (DAD)', 'UIH':'Quy Nhơn (UIH)', 'PQC':'Phú Quốc (PQC)'}
+abay_station = {'SGN':'TP Hồ Chí Minh (SGN)', 'HAN':'Hà Nội (HAN)', 'DAD':'Đà Nẵng (DAD)', 'UIH':'Quy Nhơn (UIH)', 'PQC':'Phú Quốc (PQC)', 'BKK':'Bangkok (BKK)'}
 abay_routes = {'SGN':'Tp_Ho_Chi_Minh', 'HAN':'Ha_Noi', 'DAD':'Da_Nang', 'UIH':'Quy_Nhon', 'PQC':'Phu_Quoc'}
 
 # if scrapping_info not exists or null, tell user to input information
@@ -133,6 +133,62 @@ def abay_scrapping(ngay, thang, nam, dep_station, arr_station, location):
     df = df.reindex(columns=column_order)
     
     csv_path = f'{location}\\Abay_scrapping_price_{dep_station}-{arr_station}_{nam}{str(thang).zfill(2)}{ngay}.csv'
+    df.to_csv(csv_path, index=False)
+
+
+def abay_inter_scrapping(ngay, thang, nam, dep_station, arr_station, location):
+    driver.get('https://www.abay.vn')
+    # choose the route
+    driver.execute_script(f'''document.getElementById("cphMain_ctl00_usrSearchFormDV2_txtFrom").setAttribute('value', '{abay_station[dep_station]}');''')
+    driver.execute_script(f'''document.getElementById("cphMain_ctl00_usrSearchFormDV2_txtTo").setAttribute('value', '{abay_station[arr_station]}');''')
+
+    # select day
+    dep_day = Select(driver.find_element(By.XPATH, '//*[@id="cphMain_ctl00_usrSearchFormDV2_cboDepartureDay"]'))
+    dep_day.select_by_value(str(ngay))
+    # select month
+    dep_month = Select(driver.find_element(By.XPATH, '//*[@id="cphMain_ctl00_usrSearchFormDV2_cboDepartureMonth"]'))
+    dep_month.select_by_value(f'{str(thang).zfill(2)}/{nam}')
+
+    # click the search button
+    driver.find_element(By.XPATH, '//*[@id="cphMain_ctl00_usrSearchFormDV2_btnSearch"]').click()
+    time.sleep(0.7)
+    # click the search full flights
+    driver.find_element(By.XPATH, '//*[@id="all-flights"]').click()
+
+    # wait untill all flights are available
+    while True:
+        try: 
+            if driver.find_element(By.XPATH, f'//*[@id="main"]/section[2]/div[1]').get_attribute('class') == 'captions-container':
+                break
+        except: 
+            pass
+
+    # get the data
+    i = 2
+    airline = []
+    dep_time = []
+    stop_point = []
+    price_adt = []
+
+    while True:
+        try: flight = driver.find_element(By.XPATH, f'//*[@id="main"]/section[2]/div[{i}]')
+        except:
+            break
+        
+        airline.append(flight.get_attribute('data-filter-airlines'))
+        dep_time.append(flight.get_attribute('data-filter-departure-time'))
+        stop_point.append(flight.get_attribute('data-stop-points'))
+        price_adt.append(flight.get_attribute('data-base-price-adt'))
+        i += 1
+
+    # cast into a dataframe
+    df = pd.DataFrame({'name':airline,'time': dep_time,'bag':0,'meal':0,'stop_point': stop_point,'price': price_adt, 'date':f'{nam}-{thang}-{ngay}'})
+    df['name'] = df['name'].str[:2]
+    df['time'] = df['time'].str.replace('|', '', regex=False)
+    df['stop_point'] = df['stop_point'].str.replace('|', '', regex=False)
+
+    # CSV exporting
+    csv_path = f'{location}\\Abay_scrapping_price_{dep_station}-{arr_station}_{nam}{str(thang).zfill(2)}{str(ngay).zfill(2)}.csv'
     df.to_csv(csv_path, index=False)
 
 
